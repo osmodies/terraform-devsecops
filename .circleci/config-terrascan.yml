@@ -1,0 +1,51 @@
+jobs:
+  terrascan:
+    machine: true
+    steps:
+      - checkout
+
+      - run: 
+          command: docker run --rm -v $(pwd):/src accurics/terrascan scan -t aws -d /src/aws -o json | tee terrascan-output.json || true
+
+      - store_artifacts:
+          path: terrascan-output.json
+          destination: terrascan-artifact
+          when: always
+
+  test:
+    machine: true
+    steps:
+      - checkout
+      - run: echo "This is a test step"
+
+  integration:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          command: |
+            echo "This is an integration step"
+            exit 1
+          when: on_fail         # Even if the job fails, continue to the next stages
+
+  prod:
+    machine: true
+    steps:
+      - checkout
+      - run: echo "This is a deploy step"
+
+workflows:
+  version: 2
+  terraform:
+    jobs:
+      - terrascan
+      - test:
+          requires:
+            - terrascan
+      - integration:
+          requires:
+            - test
+      - prod:
+          type: approval
+          requires:
+            - integration
