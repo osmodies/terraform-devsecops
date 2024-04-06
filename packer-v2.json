@@ -1,0 +1,28 @@
+cat > packer.json<<EOF
+{
+  "builders": [
+    {
+      "type": "docker",
+      "image": "python:3-alpine3.15",
+      "export_path": "/output/image.tar"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "apk add --no-cache gawk sed bash grep bc coreutils",
+        "pip install -r /app/requirements.txt",
+        "chmod +x /app/run.sh"
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "docker-tag",
+      "repository": "django.nv",
+      "tag": "latest"
+    }
+  ]
+}
+EOF

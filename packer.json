@@ -1,0 +1,47 @@
+cat > packer.json<<EOF
+{
+  "builders": [
+    {
+      "type": "docker",
+      "image": "python:3-alpine3.15",
+      "commit": "true",
+      "pull": "true",
+      "changes": [
+        "WORKDIR /app",
+        "EXPOSE 8000",
+        "CMD [\"/app/run.sh\"]"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir /app"
+      ]
+    },
+    {
+      "type": "file",
+      "only": ["docker"],
+      "source": "./",
+      "destination": "/app"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "apk add --no-cache gawk sed bash grep bc coreutils",
+        "cd /app",
+        "pip install --upgrade pip",
+        "pip install -r requirements.txt"
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "docker-tag",
+      "repository": "django.nv",
+      "tag": "latest"
+    }
+  ]
+}
+EOF
